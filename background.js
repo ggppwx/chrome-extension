@@ -22,24 +22,44 @@ chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
 });
 */
 
+chrome.runtime.onMessage.addListener(
+  function(request, sender, sendResponse) {
+    console.log(sender.tab ?
+                "from a content script:" + sender.tab.url :
+                "from the extension");
+
+    let url = new URL(sender.tab.url);
+    let hostname = url.origin;
+    console.log(hostname);
 
 
-$(window).bind('mousewheel', function(event) {
-    if (event.originalEvent.wheelDelta >= 0) {
-        console.log('Scroll up');
+
+    if (request.backgroundTimer == "start") {
+      console.log('start timer');
+
+    } else if (request.backgroundTimer == "stop") {
+      console.log('stop timer');
     }
-    else {
-        console.log('Scroll down');
-    }
+
+
 });
+
+
+
+
+
+
+
+
+
 
 
 
 chrome.tabs.onActivated.addListener(function(evt){ 
 
   chrome.tabs.getSelected(null, function(tab) {
-    alert(tab.url);  //the URL you asked for in *THIS QUESTION*
-
+    // alert(tab.url);  //the URL you asked for in *THIS QUESTION*
+    console.log(tab.url);
     // get timer for current url 
 
 
