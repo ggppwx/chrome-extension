@@ -1,6 +1,6 @@
 
 
-
+console.log('---------------- load content ---------------------');
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if( request.message === "clicked_browser_action" ) {
@@ -28,6 +28,7 @@ var startBackgroundTimer = function(){
 var timers = []
 let gracePeriodInMs = 2000;
 let timeoutInMs = 1000 * 30;
+startBackgroundTimer();
 timers.push(setTimeout(stopBackgroundTimer, timeoutInMs));
 
 $(window).scroll(function() {
