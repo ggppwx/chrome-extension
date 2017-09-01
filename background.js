@@ -28,19 +28,23 @@ var CURRENT_TIMER = new Timer("global");
 
 // timer class 
 function Timer(name) {
-  this.name = name;
-  this.reset();
+  var name = name;
+  this.start_time_in_seconds = undefined;
+  this.timer_counter = 0;
+  this.interval_id = undefined;    
+
 }
 
 Timer.prototype.reset = function() {
-  this.start_time_in_seconds = undefined;
-  this.timer_counter = 0;
-  this.interval_id = undefined;
-}
+    this.start_time_in_seconds = undefined;
+    this.timer_counter = 0;
+    this.interval_id = undefined;    
+};
+
 
 Timer.prototype.start = function() {
   if (this.start_time_in_seconds) {
-    console.log('the timer is running.')
+    console.log('the timer is already running.')
   } else {
     this.start_time_in_seconds = Date.now()/1000;
     this.timer_counter = 0;
@@ -55,42 +59,79 @@ Timer.prototype.start = function() {
 Timer.prototype.stop = function() {
   if (this.interval_id) {
     clearInterval(this.interval_id);
+    var result = {
+      "end_time_in_seconds" : this.start_time_in_seconds + this.timer_counter,
+      "count_in_seconds" : this.timer_counter
+    }
+    this.reset();
+    return result;
+  } else {
+    console.log('no timer is running');
+    return undefined;
   }
-  var result = {
-    "end_time_in_seconds" : this.start_time_in_seconds + this.timer_counter,
-    "count_in_seconds" : this.timer_counter
-  }
-  this.reset();
-  return result;
+
 };
 
 
 function startTimer(url) {
   // if url is another, stop current timer. 
-
-
-  CURRENT_TIMER.start()
+  console.log('ACTIVATE TIMER -----');
+  if (url !== CURRENT_BROWERSING_URL) {
+    // reset 
+      stopTimer();    
+  } 
+  
+  CURRENT_BROWERSING_URL = url;
+  CURRENT_TIMER.start();
 }
 
 function stopTimer() {
-  CURRENT_TIMER.stop();
+  console.log('CLEAR TIMER -----');
+  let previous = CURRENT_TIMER.stop();
+  if (previous === undefined) {
+    console.log('no timer found ');
+
+  } else {
+
+     // save it to database
+    console.log('SAVING ' + CURRENT_BROWERSING_URL + ' after ' + previous.count_in_seconds);
+    getUrlTimerStatus(CURRENT_BROWERSING_URL, function(url, record) {
+      let total = previous.count_in_seconds;
+      if (record && record.total_time_in_seconds){
+        total += record.total_time_in_seconds;
+      } 
+
+      let last_run = previous.end_time_in_seconds;
+      saveUrlTimerStatus(url, total, last_run);
+    });
+
+  }
+
+  CURRENT_BROWERSING_URL = undefined;
+
 }
 
-function getUrlTimerStatus(url) {
-
+function getUrlTimerStatus(url , callback) {
   chrome.storage.sync.get(url, function(records) {
     // Notify that we saved.
     console.log('current status for url ' + url);
     console.log(records);
-
+    callback(url, records);
   });
 
 
 } 
 
 
-function saveUrlTimerStatus(url) {
+function saveUrlTimerStatus(url, time_in_seconds, last_run){
+  chrome.storage.sync.set({ [url] : {
+    total_time_in_seconds : time_in_seconds,
+    last_run: last_run
+  }}, function() {
+    // Notify that we saved.
+    console.log('url saved: ' + url);
 
+  });
 }
 
 
@@ -111,13 +152,21 @@ chrome.runtime.onMessage.addListener(
     let hostname = url.origin;
     console.log(hostname);
 
-
-
     if (request.backgroundTimer == "start") {
-      console.log('start timer');
+      console.log('start timer message');
+      startTimer(hostname);
 
     } else if (request.backgroundTimer == "stop") {
-      console.log('stop timer');
+
+      if (hostname === CURRENT_BROWERSING_URL) {
+        console.log('stop timer message');
+        stopTimer();
+      } else {
+        console.log('not browsing this site ignore stop ');
+      }
+
+
+
     }
 
 
@@ -126,7 +175,13 @@ chrome.runtime.onMessage.addListener(
 
 
 
-
+function resetContentScrollingDetector(){
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    var activeTab = tabs[0];
+    console.log('reset windows scrolling dector');
+    chrome.tabs.sendMessage(activeTab.id, {"message": "reset_detector"});
+  });
+}
 
 
 
@@ -135,24 +190,26 @@ chrome.runtime.onMessage.addListener(
 
 // start 
 chrome.tabs.onActivated.addListener(function(evt){ 
-
+  console.log('tab onActivated');
   chrome.tabs.getSelected(null, function(tab) {
     // alert(tab.url);  //the URL you asked for in *THIS QUESTION*
     console.log(tab.url);
     // get timer for current url 
-    let url = new URL(sender.tab.url);
+    let url = new URL(tab.url);
     let hostname = url.origin;
-    startTimer(hostname);
-
+    // startTimer(hostname);
+    resetContentScrollingDetector();
 
   });
 
 });
 
 
+/*
 chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
-       console.log(tab.url);
-       if(tab.url=="https://www.google.co.in/"){
-            chrome.tabs.update(tab.id, {url: 'https://www.yahoo.com/'});
-       }
+  let url = new URL(tab.url);
+  let hostname = url.origin;
+  startTimer(hostname);
+
 });
+*/

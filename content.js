@@ -1,6 +1,42 @@
 
 
 console.log('---------------- load content ---------------------');
+
+var stopBackgroundTimer = function(){
+	console.log('stop');
+	chrome.runtime.sendMessage({ "backgroundTimer": "stop"}, function(response) {
+  		console.log('---------');
+	});
+};
+var startBackgroundTimer = function(){
+	console.log('start');
+	chrome.runtime.sendMessage({ "backgroundTimer": "start"}, function(response) {
+  		console.log('------------');
+	});
+};
+
+var timers = []
+let gracePeriodInMs = 2000;
+let timeoutInMs = 1000 * 60;
+resetDetector();
+
+
+function resetDetector() {
+	for (var i = timers.length - 1; i >= 0; i--) {
+		clearTimeout(timers[i]);
+	}
+	startBackgroundTimer();
+	timers.push(setTimeout(stopBackgroundTimer, timeoutInMs));
+}
+
+
+
+$(window).scroll(function() {
+	// clear all timer 
+	resetDetector();
+});
+
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     if( request.message === "clicked_browser_action" ) {
@@ -9,35 +45,9 @@ chrome.runtime.onMessage.addListener(
 
       // This line is new!
 
+    } 
+    if (request.message === "reset_detector") {
+    	resetDetector();
     }
   }
 );
-var stopBackgroundTimer = function(){
-	console.log('stop');
-	chrome.runtime.sendMessage({backgroundTimer: "stop"}, function(response) {
-  		
-	});
-};
-var startBackgroundTimer = function(){
-	console.log('start');
-	chrome.runtime.sendMessage({backgroundTimer: "start"}, function(response) {
-  		
-	});
-};
-
-var timers = []
-let gracePeriodInMs = 2000;
-let timeoutInMs = 1000 * 30;
-startBackgroundTimer();
-timers.push(setTimeout(stopBackgroundTimer, timeoutInMs));
-
-$(window).scroll(function() {
-	// clear all timer 
-	for (var i = timers.length - 1; i >= 0; i--) {
-		clearTimeout(timers[i]);
-	}
-	timers.push(setTimeout(startBackgroundTimer, gracePeriodInMs));
-	timers.push(setTimeout(stopBackgroundTimer, timeoutInMs));
-	
-
-});
