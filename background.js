@@ -23,7 +23,7 @@ chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
 */
 
 var CURRENT_BROWERSING_URL = undefined;
-var CURRENT_TIMER_IN_SECONDS = 0; 
+var CURRENT_TOTAL_TIMER_IN_SECONDS = 0; 
 var CURRENT_TIMER = new Timer("global");
 
 // timer class 
@@ -41,6 +41,12 @@ Timer.prototype.reset = function() {
     this.interval_id = undefined;    
 };
 
+Timer.prototype.tick = function() {
+	 let total = this.timer_counter + CURRENT_TOTAL_TIMER_IN_SECONDS;
+     console.log('tick ' + total);
+     this.timer_counter += 1;
+};
+
 
 Timer.prototype.start = function() {
   if (this.start_time_in_seconds) {
@@ -49,8 +55,7 @@ Timer.prototype.start = function() {
     this.start_time_in_seconds = Date.now()/1000;
     this.timer_counter = 0;
     this.interval_id = setInterval( () => { // we can use 'this'
-      console.log('tick');
-      this.timer_counter += 1;
+    	this.tick();
     }, 1000);
     console.log('start ticking');
   }
@@ -78,10 +83,26 @@ function startTimer(url) {
   console.log('ACTIVATE TIMER -----');
   if (url !== CURRENT_BROWERSING_URL) {
     // reset 
-      stopTimer();    
-  } 
+      stopTimer();  
+
+	  CURRENT_BROWERSING_URL = url;
+	  getUrlTimerStatus(CURRENT_BROWERSING_URL, function(url, record) {
+	  	if(record && record[url] && record[url].	total_time_in_seconds) {
+			CURRENT_TOTAL_TIMER_IN_SECONDS = record[url].total_time_in_seconds;
+		} else {
+			CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
+		}
+	  });
+
+
+  } else {
+  	console.log('CURRENT_TOTAL_TIMER_IN_SECONDS: '+ CURRENT_TOTAL_TIMER_IN_SECONDS); 
+  }
   
-  CURRENT_BROWERSING_URL = url;
+
+
+
+
   CURRENT_TIMER.start();
 }
 
@@ -95,19 +116,15 @@ function stopTimer() {
 
      // save it to database
     console.log('SAVING ' + CURRENT_BROWERSING_URL + ' after ' + previous.count_in_seconds);
-    getUrlTimerStatus(CURRENT_BROWERSING_URL, function(url, record) {
-      let total = previous.count_in_seconds;
-      if (record && record.total_time_in_seconds){
-        total += record.total_time_in_seconds;
-      } 
-
+      let total = previous.count_in_seconds + CURRENT_TOTAL_TIMER_IN_SECONDS;
       let last_run = previous.end_time_in_seconds;
-      saveUrlTimerStatus(url, total, last_run);
-    });
+      saveUrlTimerStatus(CURRENT_BROWERSING_URL, total, last_run);
+
 
   }
 
   CURRENT_BROWERSING_URL = undefined;
+  CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
 
 }
 
