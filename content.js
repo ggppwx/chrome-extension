@@ -1,4 +1,28 @@
 
+$(function() {
+  // Handler for .ready() called.
+  function onchange() {
+  	console.log('afasfasfadsfafa');
+  }
+
+  var hidden = "hidden";
+
+  // Standards:
+  if (hidden in document)
+    document.addEventListener("visibilitychange", onchange);
+  else if ((hidden = "mozHidden") in document)
+    document.addEventListener("mozvisibilitychange", onchange);
+  else if ((hidden = "webkitHidden") in document)
+    document.addEventListener("webkitvisibilitychange", onchange);
+  else if ((hidden = "msHidden") in document)
+    document.addEventListener("msvisibilitychange", onchange);
+
+
+
+
+
+
+
 
 console.log('---------------- load content ---------------------');
 
@@ -18,24 +42,37 @@ var startBackgroundTimer = function(){
 var timers = []
 let gracePeriodInMs = 2000;
 let timeoutInMs = 1000 * 60;
-resetDetector();
 
 
 function resetDetector() {
 	for (var i = timers.length - 1; i >= 0; i--) {
 		clearTimeout(timers[i]);
-	}
-	startBackgroundTimer();
+	}	
 	timers.push(setTimeout(stopBackgroundTimer, timeoutInMs));
 }
 
 
 
+
 $(window).scroll(function() {
 	// clear all timer 
-	resetDetector();
+	startBackgroundTimer();
+	// resetDetector();
 });
 
+
+$(window).focus(function() {
+    window_focus = true;
+    console.log('focus');
+
+}).blur(function() {
+    window_focus = false;
+    console.log('blur');
+    stopBackgroundTimer();
+});
+document.addEventListener('visibilitychange', function(){
+    console.log('change');
+})
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
@@ -47,7 +84,9 @@ chrome.runtime.onMessage.addListener(
 
     } 
     if (request.message === "reset_detector") {
-    	resetDetector();
+    	//resetDetector();
     }
   }
 );
+
+});

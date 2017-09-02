@@ -81,6 +81,10 @@ Timer.prototype.stop = function() {
 function startTimer(url) {
   // if url is another, stop current timer. 
   console.log('ACTIVATE TIMER -----');
+
+  // ignore some url
+
+
   if (url !== CURRENT_BROWERSING_URL) {
     // reset 
       stopTimer();  
@@ -96,6 +100,7 @@ function startTimer(url) {
 
 
   } else {
+    console.log('timer for the url already running');
   	console.log('CURRENT_TOTAL_TIMER_IN_SECONDS: '+ CURRENT_TOTAL_TIMER_IN_SECONDS); 
   }
   
@@ -108,6 +113,11 @@ function startTimer(url) {
 
 function stopTimer() {
   console.log('CLEAR TIMER -----');
+
+
+  //ignore some url
+
+
   let previous = CURRENT_TIMER.stop();
   if (previous === undefined) {
     console.log('no timer found ');
@@ -174,6 +184,11 @@ chrome.runtime.onMessage.addListener(
       startTimer(hostname);
 
     } else if (request.backgroundTimer == "stop") {
+      // if out of window, stop
+
+      // if in other window
+
+
 
       if (hostname === CURRENT_BROWERSING_URL) {
         console.log('stop timer message');
@@ -214,19 +229,45 @@ chrome.tabs.onActivated.addListener(function(evt){
     // get timer for current url 
     let url = new URL(tab.url);
     let hostname = url.origin;
-    // startTimer(hostname);
+    startTimer(hostname);
     resetContentScrollingDetector();
 
   });
 
 });
 
+chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
+  console.log('tab onRemoved');
 
-/*
+  stopTimer();
+
+
+});
+
 chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
+  console.log('tab onUpdated');
   let url = new URL(tab.url);
   let hostname = url.origin;
   startTimer(hostname);
+  resetContentScrollingDetector();
+});
+
+
+chrome.windows.onFocusChanged.addListener(function (windowId) {
+  console.log(windowId);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 });
-*/
