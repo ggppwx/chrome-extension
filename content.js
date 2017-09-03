@@ -56,7 +56,7 @@ function resetDetector() {
 
 $(window).scroll(function() {
 	// clear all timer 
-	startBackgroundTimer();
+	// startBackgroundTimer();
 	// resetDetector();
 });
 
@@ -64,11 +64,17 @@ $(window).scroll(function() {
 $(window).focus(function() {
     window_focus = true;
     console.log('focus');
+    startBackgroundTimer();
 
 }).blur(function() {
     window_focus = false;
     console.log('blur');
     stopBackgroundTimer();
+    chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
+  		console.log('------------');
+	});
+
+
 });
 document.addEventListener('visibilitychange', function(){
     console.log('change');
@@ -84,7 +90,7 @@ chrome.runtime.onMessage.addListener(
 
     } 
     if (request.message === "reset_detector") {
-    	//resetDetector();
+    	// resetDetector();
     }
   }
 );

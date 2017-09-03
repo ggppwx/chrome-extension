@@ -181,7 +181,7 @@ chrome.runtime.onMessage.addListener(
 
     if (request.backgroundTimer == "start") {
       console.log('start timer message');
-      startTimer(hostname);
+      setTimeout(function () { startTimer(hostname)}, 2000);
 
     } else if (request.backgroundTimer == "stop") {
       // if out of window, stop
@@ -198,6 +198,10 @@ chrome.runtime.onMessage.addListener(
       }
 
 
+
+    } else if (request.backgroundTimer == "blur") {
+
+      console.log(hostname + ' is bluring out !!!!! ');
 
     }
 
@@ -221,6 +225,7 @@ function resetContentScrollingDetector(){
 
 
 // start 
+/*
 chrome.tabs.onActivated.addListener(function(evt){ 
   console.log('tab onActivated');
   chrome.tabs.getSelected(null, function(tab) {
@@ -229,13 +234,14 @@ chrome.tabs.onActivated.addListener(function(evt){
     // get timer for current url 
     let url = new URL(tab.url);
     let hostname = url.origin;
-    startTimer(hostname);
+    setTimeout(function() { startTimer(hostname)}, 2000);
     resetContentScrollingDetector();
 
   });
 
 });
 
+*/
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log('tab onRemoved');
 
@@ -248,26 +254,22 @@ chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
   console.log('tab onUpdated');
   let url = new URL(tab.url);
   let hostname = url.origin;
-  startTimer(hostname);
+  setTimeout(function () { startTimer(hostname)}, 2000);
   resetContentScrollingDetector();
 });
 
-
+/*
 chrome.windows.onFocusChanged.addListener(function (windowId) {
   console.log(windowId);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    var activeTab = tabs[0];
+    let url = new URL(activeTab.url);
+    let hostname = url.origin;
+    setTimeout(function() { startTimer(hostname) }, 2000);
+    resetContentScrollingDetector();
+  });
 
 });
+
+*/
