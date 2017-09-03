@@ -1,5 +1,4 @@
 
-$(function() {
   // Handler for .ready() called.
   function onchange() {
   	console.log('afasfasfadsfafa');
@@ -52,7 +51,7 @@ function resetDetector() {
 }
 
 
-
+startBackgroundTimer();
 
 $(window).scroll(function() {
 	// clear all timer 
@@ -94,5 +93,3 @@ chrome.runtime.onMessage.addListener(
     }
   }
 );
-
-});

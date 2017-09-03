@@ -250,6 +250,7 @@ chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
 
 });
 
+/*
 chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
   console.log('tab onUpdated');
   let url = new URL(tab.url);
@@ -257,6 +258,7 @@ chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
   setTimeout(function () { startTimer(hostname)}, 2000);
   resetContentScrollingDetector();
 });
+*/
 
 /*
 chrome.windows.onFocusChanged.addListener(function (windowId) {
