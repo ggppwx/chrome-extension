@@ -256,7 +256,7 @@ chrome.runtime.onMessage.addListener(
 
     if (request.backgroundTimer == "start") {
       console.log('start timer message');
-      setTimeout(function () { startTimerNew(hostname, id )}, 2000);
+      startTimerNew(hostname, id );
 
     } else if (request.backgroundTimer == "stop") {
       // if out of window, stop
