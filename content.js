@@ -38,10 +38,11 @@ var startBackgroundTimer = function(){
 	});
 };
 
-var loadBackground = function() {
+var loadBackground = function(call_back) {
 	console.log('load');
 	chrome.runtime.sendMessage({ "backgroundTimer": "init"}, function(response) {
   		console.log('------------');
+  		call_back();
 	});
 }
 
@@ -59,7 +60,7 @@ function resetDetector() {
 
 
 //startBackgroundTimer();
-loadBackground();
+
 
 
 $(window).scroll(function() {
@@ -70,12 +71,10 @@ $(window).scroll(function() {
 
 
 $(window).focus(function() {
-    window_focus = true;
     console.log('focus');
     startBackgroundTimer();
 
 }).blur(function() {
-    window_focus = false;
     console.log('blur');
     stopBackgroundTimer();
     chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
@@ -84,6 +83,24 @@ $(window).focus(function() {
 
 
 });
+
+$(document).ready(function() {
+
+	loadBackground(() => {
+		if ( document.hasFocus() ) {
+			console.log('window focused, start timer ');
+			startBackgroundTimer();
+		}
+
+	});
+
+});
+
+
+
+
+
+
 document.addEventListener('visibilitychange', function(){
     console.log('change');
 })
@@ -102,3 +119,6 @@ chrome.runtime.onMessage.addListener(
     }
   }
 );
+
+
+

@@ -89,7 +89,6 @@ function initTimer(url, tabid) {
   }
 
   CURRENT_TIMER[tabid] = new Timer(url);
-  startTimerNew(url, tabid);
 }
 
 
@@ -126,7 +125,16 @@ function stopTimerNew(tabid) {
      // save it to database
 
   console.log('stop tab: ' + tabid);
-  let previous = CURRENT_TIMER[tabid].stop();
+  if (CURRENT_TIMER[tabid] == undefined) {
+    console.log();
+    return;
+  }
+
+  let previous = undefined;
+  if (CURRENT_TIMER[tabid]) {
+    previous = CURRENT_TIMER[tabid].stop();;
+  }
+
   if (previous === undefined) {
     console.log('no timer found ');
 
@@ -262,7 +270,7 @@ chrome.runtime.onMessage.addListener(
       // if out of window, stop
 
       // if in other window
-
+      console.log('stop timer message');
       stopTimerNew(id);
       /*
       if (hostname === CURRENT_BROWERSING_URL) {
