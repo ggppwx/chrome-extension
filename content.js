@@ -38,6 +38,13 @@ var startBackgroundTimer = function(){
 	});
 };
 
+var loadBackground = function() {
+	console.log('load');
+	chrome.runtime.sendMessage({ "backgroundTimer": "init"}, function(response) {
+  		console.log('------------');
+	});
+}
+
 var timers = []
 let gracePeriodInMs = 2000;
 let timeoutInMs = 1000 * 60;
@@ -51,7 +58,9 @@ function resetDetector() {
 }
 
 
-startBackgroundTimer();
+//startBackgroundTimer();
+loadBackground();
+
 
 $(window).scroll(function() {
 	// clear all timer 
