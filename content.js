@@ -70,19 +70,6 @@ $(window).scroll(function() {
 });
 
 
-$(window).focus(function() {
-    console.log('focus');
-    startBackgroundTimer();
-
-}).blur(function() {
-    console.log('blur');
-    stopBackgroundTimer();
-    chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
-  		console.log('------------');
-	});
-
-
-});
 
 $(document).ready(function() {
 
@@ -91,6 +78,24 @@ $(document).ready(function() {
 			console.log('window focused, start timer ');
 			startBackgroundTimer();
 		}
+
+
+		$(window).focus(function() {
+		    console.log('focus');
+		    startBackgroundTimer();
+
+		}).blur(function() {
+		    console.log('blur');
+		    stopBackgroundTimer();
+		    chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
+		  		console.log('------------');
+			});
+
+
+		});
+
+
+
 
 	});
 
