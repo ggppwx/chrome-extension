@@ -88,7 +88,7 @@ function startTimerNew(url, tabid) {
   chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
     var activeTab = tabs[0];
     console.log(tabs);
-    var activeUrl = new URL(activeTab.url).origin;
+    var activeUrl = getUrlObj(activeTab.url).hostname;
     console.log('current tab is ' + activeUrl);
 
     if (url == activeUrl) {      
@@ -270,8 +270,8 @@ chrome.runtime.onMessage.addListener(
     console.log(sender.tab ?
                 "from a content script:" + sender.tab.url :
                 "from the extension");
-
-    let hostname = getUrlObj(sender.tab.url).hostname
+      let id = sender.tab.id;
+      let hostname = getUrlObj(sender.tab.url).hostname;
     console.log(hostname);
 
     if (request.backgroundTimer == "start") {
