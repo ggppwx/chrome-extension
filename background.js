@@ -1,30 +1,20 @@
 
 // Called when the user clicks on the browser action.
-chrome.browserAction.onClicked.addListener(function(tab) {
-  // Send a message to the active tab
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    var activeTab = tabs[0];
-    console.log('background hello');
 
-
-    chrome.tabs.sendMessage(activeTab.id, {"message": "clicked_browser_action"});
-  });
-});
-
-/*
-chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
-
-   // since only one tab should be active and in the current window at once
-   // the return variable should only have one entry
-   var activeTab = arrayOfTabs[0];
-   var activeTabId = activeTab.id; // or do whatever you need
-    console.log(activeTab.url);
-});
-*/
 
 var CURRENT_BROWERSING_URL = undefined;
 var CURRENT_TOTAL_TIMER_IN_SECONDS = 0; 
 var CURRENT_TIMER = new Timer("global");
+
+// utility function 
+function getUrlObj(url) {
+    let l = document.createElement("a");
+    l.href = url;
+    return l;
+}
+
+
+
 
 // timer class 
 function Timer(name) {
@@ -162,6 +152,29 @@ function saveUrlTimerStatus(url, time_in_seconds, last_run){
 }
 
 
+chrome.browserAction.onClicked.addListener(function(tab) {
+  // Send a message to the active tab
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    var activeTab = tabs[0];
+    console.log('background hello');
+
+
+    chrome.tabs.sendMessage(activeTab.id, {"message": "clicked_browser_action"});
+  });
+});
+
+/*
+chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
+
+   // since only one tab should be active and in the current window at once
+   // the return variable should only have one entry
+   var activeTab = arrayOfTabs[0];
+   var activeTabId = activeTab.id; // or do whatever you need
+    console.log(activeTab.url);
+});
+*/
+
+
 
 // data storage 
 // data structre for timer
@@ -175,8 +188,7 @@ chrome.runtime.onMessage.addListener(
                 "from a content script:" + sender.tab.url :
                 "from the extension");
 
-    let url = new URL(sender.tab.url);
-    let hostname = url.origin;
+    let hostname = getUrlObj(sender.tab.url).hostname
     console.log(hostname);
 
     if (request.backgroundTimer == "start") {
@@ -242,11 +254,14 @@ chrome.tabs.onActivated.addListener(function(evt){
 });
 
 */
+
+
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log('tab onRemoved');
 
-  stopTimer();
-
+  if (removeInfo.isWindowClosing) {
+    stopTimer();
+  }
 
 });
 
