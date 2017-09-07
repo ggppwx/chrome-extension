@@ -38,6 +38,14 @@ var startBackgroundTimer = function(){
 	});
 };
 
+var loadBackground = function(call_back) {
+	console.log('load');
+	chrome.runtime.sendMessage({ "backgroundTimer": "init"}, function(response) {
+  		console.log('------------');
+  		call_back();
+	});
+}
+
 var timers = []
 let gracePeriodInMs = 2000;
 let timeoutInMs = 1000 * 60;
@@ -51,8 +59,6 @@ function resetDetector() {
 }
 
 
-startBackgroundTimer();
-
 $(window).scroll(function() {
 	// clear all timer 
 	// startBackgroundTimer();
@@ -60,21 +66,40 @@ $(window).scroll(function() {
 });
 
 
-$(window).focus(function() {
-    window_focus = true;
-    console.log('focus');
-    startBackgroundTimer();
 
-}).blur(function() {
-    window_focus = false;
-    console.log('blur');
-    stopBackgroundTimer();
-    chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
-  		console.log('------------');
+$(document).ready(function() {
+
+    loadBackground(() => {
+	
+		$(window).focus(function() {
+		    console.log('focus');
+		    startBackgroundTimer();
+
+		}).blur(function() {
+		    console.log('blur');
+		    stopBackgroundTimer();
+		    chrome.runtime.sendMessage({ "backgroundTimer": "blur"}, function(response) {
+		  		console.log('------------');
+			});
+
+
+		});
+
+	
+		if ( document.hasFocus() ) {
+			console.log('window focused, start timer ');
+			startBackgroundTimer();
+		}
+
 	});
 
-
 });
+
+
+
+
+
+
 document.addEventListener('visibilitychange', function(){
     console.log('change');
 })
@@ -85,11 +110,12 @@ chrome.runtime.onMessage.addListener(
 
       console.log('hello world');
 
-      // This line is new!
-
     } 
     if (request.message === "reset_detector") {
     	// resetDetector();
     }
   }
 );
+
+
+

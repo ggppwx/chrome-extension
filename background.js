@@ -4,7 +4,7 @@
 
 var CURRENT_BROWERSING_URL = undefined;
 var CURRENT_TOTAL_TIMER_IN_SECONDS = 0; 
-var CURRENT_TIMER = new Timer("global");
+var CURRENT_TIMER = {};
 
 // utility function 
 function getUrlObj(url) {
@@ -18,7 +18,7 @@ function getUrlObj(url) {
 
 // timer class 
 function Timer(name) {
-  var name = name;
+  this.name = name;
   this.start_time_in_seconds = undefined;
   this.timer_counter = 0;
   this.interval_id = undefined;    
@@ -33,7 +33,7 @@ Timer.prototype.reset = function() {
 
 Timer.prototype.tick = function() {
 	 let total = this.timer_counter + CURRENT_TOTAL_TIMER_IN_SECONDS;
-     console.log('tick ' + total);
+     console.log(this.name + ' tick ' + total);
      this.timer_counter += 1;
 };
 
@@ -55,6 +55,7 @@ Timer.prototype.stop = function() {
   if (this.interval_id) {
     clearInterval(this.interval_id);
     var result = {
+      "name" : this.name,
       "end_time_in_seconds" : this.start_time_in_seconds + this.timer_counter,
       "count_in_seconds" : this.timer_counter
     }
@@ -67,7 +68,86 @@ Timer.prototype.stop = function() {
 
 };
 
+function initTimer(url, tabid) {
+  console.log('INIT TIMER -----' + url + " tab " + tabid);
 
+  // stop exsisiting 
+
+  if (CURRENT_TIMER[tabid]) {
+
+    stopTimerNew(tabid)
+  }
+
+  CURRENT_TIMER[tabid] = new Timer(url);
+}
+
+
+
+function startTimerNew(url, tabid) {
+  console.log('start tab: ' + tabid);
+  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    var activeTab = tabs[0];
+    console.log(tabs);
+    var activeUrl = new URL(activeTab.url).origin;
+    console.log('current tab is ' + activeUrl);
+
+    if (url == activeUrl) {      
+      getUrlTimerStatus(url, function(url, record) {
+        if(record && record[url] && record[url].  total_time_in_seconds) {
+          CURRENT_TOTAL_TIMER_IN_SECONDS = record[url].total_time_in_seconds;
+        } else {
+          CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
+        }
+      });
+
+      
+      CURRENT_TIMER[tabid].start();
+
+    } else {
+      console.log(url + ' is diffrent with current tab ' + activeUrl);
+    }
+
+  });
+}
+
+
+function stopTimerNew(tabid) {
+     // save it to database
+
+  console.log('stop tab: ' + tabid);
+  if (CURRENT_TIMER[tabid] == undefined) {
+    console.log();
+    return;
+  }
+
+  let previous = undefined;
+  if (CURRENT_TIMER[tabid]) {
+    previous = CURRENT_TIMER[tabid].stop();;
+  }
+
+  if (previous === undefined) {
+    console.log('no timer found ');
+
+  } else {
+
+     // save it to database
+    let url = previous.name;
+    console.log('SAVING ' + url + ' after ' + previous.count_in_seconds);
+    let total = previous.count_in_seconds + CURRENT_TOTAL_TIMER_IN_SECONDS;
+    let last_run = previous.end_time_in_seconds;
+    saveUrlTimerStatus(url, total, last_run);
+
+  }
+
+}
+
+function clearTimer(tabid) {
+  stopTimerNew(tabid);
+  CURRENT_TIMER[tabid] = undefined;
+}
+
+
+/*
 function startTimer(url) {
   // if url is another, stop current timer. 
   console.log('ACTIVATE TIMER -----');
@@ -77,7 +157,7 @@ function startTimer(url) {
 
   if (url !== CURRENT_BROWERSING_URL) {
     // reset 
-      stopTimer();  
+    stopTimer();  
 
 	  CURRENT_BROWERSING_URL = url;
 	  getUrlTimerStatus(CURRENT_BROWERSING_URL, function(url, record) {
@@ -127,6 +207,9 @@ function stopTimer() {
   CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
 
 }
+
+*/
+
 
 function getUrlTimerStatus(url , callback) {
   chrome.storage.sync.get(url, function(records) {
@@ -193,23 +276,26 @@ chrome.runtime.onMessage.addListener(
 
     if (request.backgroundTimer == "start") {
       console.log('start timer message');
-      setTimeout(function () { startTimer(hostname)}, 2000);
+      startTimerNew(hostname, id );
 
     } else if (request.backgroundTimer == "stop") {
       // if out of window, stop
 
       // if in other window
-
-
-
+      console.log('stop timer message');
+      stopTimerNew(id);
+      /*
       if (hostname === CURRENT_BROWERSING_URL) {
         console.log('stop timer message');
         stopTimer();
       } else {
         console.log('not browsing this site ignore stop ');
       }
+      */
 
-
+    } else if (request.backgroundTimer == 'init') {
+      console.log('init backgroundTimer');
+      initTimer(hostname, id);
 
     } else if (request.backgroundTimer == "blur") {
 
@@ -258,11 +344,7 @@ chrome.tabs.onActivated.addListener(function(evt){
 
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log('tab onRemoved');
-
-  if (removeInfo.isWindowClosing) {
-    stopTimer();
-  }
-
+  clearTimer(tabId);
 });
 
 /*
