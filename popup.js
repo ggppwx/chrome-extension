@@ -16,7 +16,7 @@ $(document).ready(function() {
             let urlObj = urlList[i];
             let rowContent = '<tr>'
             rowContent += '<td>' + urlObj.url + '</td>';
-            rowContent += '<td>' + urlObj.totalSeconds + '</td>';
+            rowContent += '<td>' + Math.round(urlObj.totalSeconds/60) + '</td>';
             rowContent += '</tr>'
 
             $('#stat table').append(rowContent);

@@ -6,6 +6,50 @@ var CURRENT_BROWERSING_URL = undefined;
 var CURRENT_TOTAL_TIMER_IN_SECONDS = 0; 
 var CURRENT_TIMER = {};
 
+setUpCleanup();
+function setUpCleanup() {
+  chrome.storage.sync.get("CLEAN_UP_SCHEDULER", function(record) {
+    console.log(record);
+    let last_cleanup =  record.last_cleanup;
+    let today = new Date();
+    let today_cleanup = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+    console.log('today cleanup: ' + new Date(today_cleanup));
+    if (last_cleanup < today_cleanup) {
+      // clear first 
+      cleanup();
+    }
+
+    // set clear up alarm 
+    let next_cleanup = today_cleanup + 24*60*60*1000;
+    console.log('next cleanup: ' + new Date(next_cleanup));
+    chrome.alarms.create('job', {
+        when: next_cleanup,
+        periodInMinutes: 24*60
+    });
+  });
+
+}
+
+function cleanup() {
+  chrome.storage.sync.clear(function(){
+    chrome.storage.sync.set({ "CLEAN_UP_SCHEDULER": {
+      last_cleanup : Date.now()
+    }}, function() {
+      // Notify that we saved.
+      console.log('clean up database');
+    });
+  });
+
+}
+
+chrome.alarms.onAlarm.addListener(function(alarm) {
+    if (alarm.name === 'job') {
+        cleanup();
+    }
+});
+
+
+
 // utility function 
 function getUrlObj(url) {
     let l = document.createElement("a");
@@ -147,69 +191,6 @@ function clearTimer(tabid) {
 }
 
 
-/*
-function startTimer(url) {
-  // if url is another, stop current timer. 
-  console.log('ACTIVATE TIMER -----');
-
-  // ignore some url
-
-
-  if (url !== CURRENT_BROWERSING_URL) {
-    // reset 
-    stopTimer();  
-
-	  CURRENT_BROWERSING_URL = url;
-	  getUrlTimerStatus(CURRENT_BROWERSING_URL, function(url, record) {
-	  	if(record && record[url] && record[url].	total_time_in_seconds) {
-			CURRENT_TOTAL_TIMER_IN_SECONDS = record[url].total_time_in_seconds;
-		} else {
-			CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
-		}
-	  });
-
-
-  } else {
-    console.log('timer for the url already running');
-  	console.log('CURRENT_TOTAL_TIMER_IN_SECONDS: '+ CURRENT_TOTAL_TIMER_IN_SECONDS); 
-  }
-  
-
-
-
-
-  CURRENT_TIMER.start();
-}
-
-function stopTimer() {
-  console.log('CLEAR TIMER -----');
-
-
-  //ignore some url
-
-
-  let previous = CURRENT_TIMER.stop();
-  if (previous === undefined) {
-    console.log('no timer found ');
-
-  } else {
-
-     // save it to database
-    console.log('SAVING ' + CURRENT_BROWERSING_URL + ' after ' + previous.count_in_seconds);
-      let total = previous.count_in_seconds + CURRENT_TOTAL_TIMER_IN_SECONDS;
-      let last_run = previous.end_time_in_seconds;
-      saveUrlTimerStatus(CURRENT_BROWERSING_URL, total, last_run);
-
-
-  }
-
-  CURRENT_BROWERSING_URL = undefined;
-  CURRENT_TOTAL_TIMER_IN_SECONDS = 0;
-
-}
-
-*/
-
 
 function getUrlTimerStatus(url , callback) {
   chrome.storage.sync.get(url, function(records) {
@@ -246,16 +227,6 @@ chrome.browserAction.onClicked.addListener(function(tab) {
   });
 });
 
-/*
-chrome.tabs.query({active: true, currentWindow: true}, function(arrayOfTabs) {
-
-   // since only one tab should be active and in the current window at once
-   // the return variable should only have one entry
-   var activeTab = arrayOfTabs[0];
-   var activeTabId = activeTab.id; // or do whatever you need
-    console.log(activeTab.url);
-});
-*/
 
 
 
@@ -309,66 +280,9 @@ chrome.runtime.onMessage.addListener(
 
 
 
-function resetContentScrollingDetector(){
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    var activeTab = tabs[0];
-    console.log('reset windows scrolling dector');
-    chrome.tabs.sendMessage(activeTab.id, {"message": "reset_detector"});
-  });
-}
-
-
-
-
-
-
-// start 
-/*
-chrome.tabs.onActivated.addListener(function(evt){ 
-  console.log('tab onActivated');
-  chrome.tabs.getSelected(null, function(tab) {
-    // alert(tab.url);  //the URL you asked for in *THIS QUESTION*
-    console.log(tab.url);
-    // get timer for current url 
-    let url = new URL(tab.url);
-    let hostname = url.origin;
-    setTimeout(function() { startTimer(hostname)}, 2000);
-    resetContentScrollingDetector();
-
-  });
-
-});
-
-*/
-
-
 chrome.tabs.onRemoved.addListener(function (tabId, removeInfo) {
   console.log('tab onRemoved');
   clearTimer(tabId);
 });
 
-/*
-chrome.tabs.onUpdated.addListener( function( tabId,  changeInfo,  tab) {
-  console.log('tab onUpdated');
-  let url = new URL(tab.url);
-  let hostname = url.origin;
-  setTimeout(function () { startTimer(hostname)}, 2000);
-  resetContentScrollingDetector();
-});
-*/
 
-/*
-chrome.windows.onFocusChanged.addListener(function (windowId) {
-  console.log(windowId);
-
-  chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
-    var activeTab = tabs[0];
-    let url = new URL(activeTab.url);
-    let hostname = url.origin;
-    setTimeout(function() { startTimer(hostname) }, 2000);
-    resetContentScrollingDetector();
-  });
-
-});
-
-*/
